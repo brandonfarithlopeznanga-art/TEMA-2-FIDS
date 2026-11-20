@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+ xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+ xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+ xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+ xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+ id="Definitions_DUSGEM" targetNamespace="http://dusgem.example/bpmn">
+ <bpmn:process id="Proceso_Control_Inventario_DUSGEM" name="Gestión, control y abastecimiento de materiales - DUSGEM" isExecutable="true">
+  <bpmn:documentation>Proceso académico propuesto para solicitar, validar, consultar, entregar y reabastecer materiales de ensamblaje. Las tareas de sistema representan operaciones previstas en la API REST y PostgreSQL.</bpmn:documentation>
+  <bpmn:laneSet id="LaneSet_DUSGEM">
+   <bpmn:lane id="Lane_montaje" name="Personal de montaje">
+    <bpmn:flowNodeRef>start</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>solicitar</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>entregar</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>confirmar</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>end_ok</bpmn:flowNodeRef>
+   </bpmn:lane>
+   <bpmn:lane id="Lane_almacen" name="Encargado de almacén">
+    <bpmn:flowNodeRef>recibir</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>validar</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>g_valida</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>corregir</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>g_stock</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>ubicar</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>preparar</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>verificar</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>g_preparado</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>notificar</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>recibir_compra</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>g_cantidad</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>reportar_dif</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>cerrar</bpmn:flowNodeRef>
+   </bpmn:lane>
+   <bpmn:lane id="Lane_supervisor" name="Supervisor">
+    <bpmn:flowNodeRef>g_autoriza</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>sol_compra</bpmn:flowNodeRef>
+   </bpmn:lane>
+   <bpmn:lane id="Lane_sistema" name="Sistema de inventario (API REST / PostgreSQL)">
+    <bpmn:flowNodeRef>consultar</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>registrar_salida</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>actualizar_salida</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>pendiente</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>registrar_entrada</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>actualizar_entrada</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>reconsultar</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>historial</bpmn:flowNodeRef>
+    <bpmn:flowNodeRef>end_pending</bpmn:flowNodeRef>
+   </bpmn:lane>
+  </bpmn:laneSet>
+  <bpmn:startEvent id="start" name="Inicio: necesidad de materiales"/>
+  <bpmn:task id="solicitar" name="Generar solicitud de materiales"/>
+  <bpmn:task id="recibir" name="Recibir solicitud"/>
+  <bpmn:task id="validar" name="Validar datos de la solicitud"/>
+  <bpmn:exclusiveGateway id="g_valida" name="¿Solicitud válida?" gatewayDirection="Diverging"/>
+  <bpmn:task id="corregir" name="Solicitar corrección de datos"/>
+  <bpmn:task id="consultar" name="Consultar existencias en PostgreSQL mediante API"/>
+  <bpmn:exclusiveGateway id="g_stock" name="¿Hay cantidad suficiente?" gatewayDirection="Diverging"/>
+  <bpmn:task id="ubicar" name="Localizar materiales en almacén"/>
+  <bpmn:task id="preparar" name="Preparar materiales solicitados"/>
+  <bpmn:task id="verificar" name="Verificar cantidades y estado"/>
+  <bpmn:exclusiveGateway id="g_preparado" name="¿Preparación correcta?" gatewayDirection="Diverging"/>
+  <bpmn:task id="registrar_salida" name="Registrar salida de materiales"/>
+  <bpmn:task id="actualizar_salida" name="Actualizar existencias e historial"/>
+  <bpmn:task id="entregar" name="Entregar materiales al personal"/>
+  <bpmn:task id="confirmar" name="Confirmar recepción de materiales"/>
+  <bpmn:exclusiveGateway id="g_autoriza" name="¿Supervisor autoriza reposición?" gatewayDirection="Diverging"/>
+  <bpmn:task id="notificar" name="Notificar faltante al supervisor"/>
+  <bpmn:task id="sol_compra" name="Solicitar compra o reabastecimiento"/>
+  <bpmn:task id="pendiente" name="Registrar solicitud pendiente y notificar"/>
+  <bpmn:task id="recibir_compra" name="Recibir materiales de reposición"/>
+  <bpmn:exclusiveGateway id="g_cantidad" name="¿Cantidad recibida correcta?" gatewayDirection="Diverging"/>
+  <bpmn:task id="reportar_dif" name="Reportar diferencia al proveedor"/>
+  <bpmn:task id="registrar_entrada" name="Registrar entrada de materiales"/>
+  <bpmn:task id="actualizar_entrada" name="Actualizar existencias e historial"/>
+  <bpmn:task id="reconsultar" name="Volver a consultar inventario"/>
+  <bpmn:task id="historial" name="Consolidar movimiento y estado de solicitud"/>
+  <bpmn:task id="cerrar" name="Cerrar solicitud"/>
+  <bpmn:endEvent id="end_ok" name="Fin: solicitud atendida"/>
+  <bpmn:endEvent id="end_pending" name="Fin: solicitud pendiente"/>
+  <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="solicitar"/>
+  <bpmn:sequenceFlow id="f2" sourceRef="solicitar" targetRef="recibir"/>
+  <bpmn:sequenceFlow id="f3" sourceRef="recibir" targetRef="validar"/>
+  <bpmn:sequenceFlow id="f4" sourceRef="validar" targetRef="g_valida"/>
+  <bpmn:sequenceFlow id="f5" sourceRef="g_valida" targetRef="consultar"/>
+  <bpmn:sequenceFlow id="f6" sourceRef="g_valida" targetRef="corregir"/>
+  <bpmn:sequenceFlow id="f7" sourceRef="corregir" targetRef="validar"/>
+  <bpmn:sequenceFlow id="f8" sourceRef="consultar" targetRef="g_stock"/>
+  <bpmn:sequenceFlow id="f9" sourceRef="g_stock" targetRef="ubicar"/>
+  <bpmn:sequenceFlow id="f10" sourceRef="g_stock" targetRef="notificar"/>
+  <bpmn:sequenceFlow id="f11" sourceRef="ubicar" targetRef="preparar"/>
+  <bpmn:sequenceFlow id="f12" sourceRef="preparar" targetRef="verificar"/>
+  <bpmn:sequenceFlow id="f13" sourceRef="verificar" targetRef="g_preparado"/>
+  <bpmn:sequenceFlow id="f14" sourceRef="g_preparado" targetRef="registrar_salida"/>
+  <bpmn:sequenceFlow id="f15" sourceRef="g_preparado" targetRef="preparar"/>
+  <bpmn:sequenceFlow id="f16" sourceRef="registrar_salida" targetRef="actualizar_salida"/>
+  <bpmn:sequenceFlow id="f17" sourceRef="actualizar_salida" targetRef="entregar"/>
+  <bpmn:sequenceFlow id="f18" sourceRef="entregar" targetRef="confirmar"/>
+  <bpmn:sequenceFlow id="f19" sourceRef="confirmar" targetRef="historial"/>
+  <bpmn:sequenceFlow id="f20" sourceRef="notificar" targetRef="g_autoriza"/>
+  <bpmn:sequenceFlow id="f21" sourceRef="g_autoriza" targetRef="sol_compra"/>
+  <bpmn:sequenceFlow id="f22" sourceRef="g_autoriza" targetRef="pendiente"/>
+  <bpmn:sequenceFlow id="f23" sourceRef="pendiente" targetRef="end_pending"/>
+  <bpmn:sequenceFlow id="f24" sourceRef="sol_compra" targetRef="recibir_compra"/>
+  <bpmn:sequenceFlow id="f25" sourceRef="recibir_compra" targetRef="g_cantidad"/>
+  <bpmn:sequenceFlow id="f26" sourceRef="g_cantidad" targetRef="registrar_entrada"/>
+  <bpmn:sequenceFlow id="f27" sourceRef="g_cantidad" targetRef="reportar_dif"/>
+  <bpmn:sequenceFlow id="f28" sourceRef="reportar_dif" targetRef="recibir_compra"/>
+  <bpmn:sequenceFlow id="f29" sourceRef="registrar_entrada" targetRef="actualizar_entrada"/>
+  <bpmn:sequenceFlow id="f30" sourceRef="actualizar_entrada" targetRef="reconsultar"/>
+  <bpmn:sequenceFlow id="f31" sourceRef="reconsultar" targetRef="consultar"/>
+  <bpmn:sequenceFlow id="f32" sourceRef="historial" targetRef="cerrar"/>
+  <bpmn:sequenceFlow id="f33" sourceRef="cerrar" targetRef="end_ok"/>
+ </bpmn:process>
+ <bpmndi:BPMNDiagram id="BPMNDiagram_DUSGEM"><bpmndi:BPMNPlane id="BPMNPlane_DUSGEM" bpmnElement="Proceso_Control_Inventario_DUSGEM">
+  <bpmndi:BPMNShape id="Shape_Lane_montaje" bpmnElement="Lane_montaje" isHorizontal="true"><dc:Bounds x="90" y="90" width="3450" height="180"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_Lane_almacen" bpmnElement="Lane_almacen" isHorizontal="true"><dc:Bounds x="90" y="270" width="3450" height="240"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_Lane_supervisor" bpmnElement="Lane_supervisor" isHorizontal="true"><dc:Bounds x="90" y="510" width="3450" height="210"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_Lane_sistema" bpmnElement="Lane_sistema" isHorizontal="true"><dc:Bounds x="90" y="720" width="3450" height="240"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_start" bpmnElement="start"><dc:Bounds x="110" y="150" width="36" height="36"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_solicitar" bpmnElement="solicitar"><dc:Bounds x="200" y="128" width="145" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_recibir" bpmnElement="recibir"><dc:Bounds x="390" y="330" width="130" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_validar" bpmnElement="validar"><dc:Bounds x="565" y="330" width="155" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_g_valida" bpmnElement="g_valida"><dc:Bounds x="770" y="345" width="50" height="50"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_corregir" bpmnElement="corregir"><dc:Bounds x="715" y="510" width="160" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_consultar" bpmnElement="consultar"><dc:Bounds x="900" y="330" width="190" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_g_stock" bpmnElement="g_stock"><dc:Bounds x="1140" y="345" width="50" height="50"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_ubicar" bpmnElement="ubicar"><dc:Bounds x="1270" y="330" width="165" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_preparar" bpmnElement="preparar"><dc:Bounds x="1480" y="330" width="165" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_verificar" bpmnElement="verificar"><dc:Bounds x="1690" y="330" width="155" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_g_preparado" bpmnElement="g_preparado"><dc:Bounds x="1890" y="345" width="50" height="50"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_registrar_salida" bpmnElement="registrar_salida"><dc:Bounds x="2010" y="330" width="160" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_actualizar_salida" bpmnElement="actualizar_salida"><dc:Bounds x="2220" y="330" width="170" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_entregar" bpmnElement="entregar"><dc:Bounds x="2440" y="128" width="165" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_confirmar" bpmnElement="confirmar"><dc:Bounds x="2650" y="128" width="175" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_g_autoriza" bpmnElement="g_autoriza"><dc:Bounds x="1290" y="700" width="50" height="50"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_notificar" bpmnElement="notificar"><dc:Bounds x="1260" y="510" width="175" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_sol_compra" bpmnElement="sol_compra"><dc:Bounds x="1430" y="700" width="185" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_pendiente" bpmnElement="pendiente"><dc:Bounds x="1430" y="850" width="185" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_recibir_compra" bpmnElement="recibir_compra"><dc:Bounds x="1660" y="700" width="180" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_g_cantidad" bpmnElement="g_cantidad"><dc:Bounds x="1885" y="715" width="50" height="50"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_reportar_dif" bpmnElement="reportar_dif"><dc:Bounds x="1820" y="850" width="175" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_registrar_entrada" bpmnElement="registrar_entrada"><dc:Bounds x="2010" y="700" width="165" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_actualizar_entrada" bpmnElement="actualizar_entrada"><dc:Bounds x="2220" y="700" width="170" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_reconsultar" bpmnElement="reconsultar"><dc:Bounds x="2440" y="700" width="175" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_historial" bpmnElement="historial"><dc:Bounds x="2870" y="470" width="195" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_cerrar" bpmnElement="cerrar"><dc:Bounds x="3110" y="330" width="145" height="80"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_end_ok" bpmnElement="end_ok"><dc:Bounds x="3330" y="150" width="36" height="36"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Shape_end_pending" bpmnElement="end_pending"><dc:Bounds x="1680" y="870" width="36" height="36"/></bpmndi:BPMNShape>
+  <bpmndi:BPMNEdge id="Edge_f1" bpmnElement="f1"><di:waypoint x="146" y="168"/><di:waypoint x="173" y="168"/><di:waypoint x="173" y="168"/><di:waypoint x="200" y="168"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f2" bpmnElement="f2"><di:waypoint x="272" y="208"/><di:waypoint x="272" y="269"/><di:waypoint x="455" y="269"/><di:waypoint x="455" y="330"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f3" bpmnElement="f3"><di:waypoint x="520" y="370"/><di:waypoint x="542" y="370"/><di:waypoint x="542" y="370"/><di:waypoint x="565" y="370"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f4" bpmnElement="f4"><di:waypoint x="720" y="370"/><di:waypoint x="745" y="370"/><di:waypoint x="745" y="370"/><di:waypoint x="770" y="370"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f5" bpmnElement="f5"><di:waypoint x="820" y="370"/><di:waypoint x="860" y="370"/><di:waypoint x="860" y="370"/><di:waypoint x="900" y="370"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f6" bpmnElement="f6"><di:waypoint x="795" y="395"/><di:waypoint x="795" y="452"/><di:waypoint x="795" y="452"/><di:waypoint x="795" y="510"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f7" bpmnElement="f7"><di:waypoint x="715" y="550"/><di:waypoint x="680" y="550"/><di:waypoint x="680" y="285"/><di:waypoint x="642" y="285"/><di:waypoint x="642" y="410"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f8" bpmnElement="f8"><di:waypoint x="1090" y="370"/><di:waypoint x="1115" y="370"/><di:waypoint x="1115" y="370"/><di:waypoint x="1140" y="370"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f9" bpmnElement="f9"><di:waypoint x="1190" y="370"/><di:waypoint x="1230" y="370"/><di:waypoint x="1230" y="370"/><di:waypoint x="1270" y="370"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f10" bpmnElement="f10"><di:waypoint x="1165" y="395"/><di:waypoint x="1165" y="452"/><di:waypoint x="1347" y="452"/><di:waypoint x="1347" y="510"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f11" bpmnElement="f11"><di:waypoint x="1435" y="370"/><di:waypoint x="1457" y="370"/><di:waypoint x="1457" y="370"/><di:waypoint x="1480" y="370"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f12" bpmnElement="f12"><di:waypoint x="1645" y="370"/><di:waypoint x="1667" y="370"/><di:waypoint x="1667" y="370"/><di:waypoint x="1690" y="370"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f13" bpmnElement="f13"><di:waypoint x="1845" y="370"/><di:waypoint x="1867" y="370"/><di:waypoint x="1867" y="370"/><di:waypoint x="1890" y="370"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f14" bpmnElement="f14"><di:waypoint x="1940" y="370"/><di:waypoint x="1975" y="370"/><di:waypoint x="1975" y="370"/><di:waypoint x="2010" y="370"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f15" bpmnElement="f15"><di:waypoint x="1915" y="345"/><di:waypoint x="1915" y="445"/><di:waypoint x="1562" y="445"/><di:waypoint x="1562" y="410"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f16" bpmnElement="f16"><di:waypoint x="2170" y="370"/><di:waypoint x="2195" y="370"/><di:waypoint x="2195" y="370"/><di:waypoint x="2220" y="370"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f17" bpmnElement="f17"><di:waypoint x="2305" y="410"/><di:waypoint x="2305" y="269"/><di:waypoint x="2522" y="269"/><di:waypoint x="2522" y="128"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f18" bpmnElement="f18"><di:waypoint x="2605" y="168"/><di:waypoint x="2627" y="168"/><di:waypoint x="2627" y="168"/><di:waypoint x="2650" y="168"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f19" bpmnElement="f19"><di:waypoint x="2737" y="208"/><di:waypoint x="2737" y="339"/><di:waypoint x="2967" y="339"/><di:waypoint x="2967" y="470"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f20" bpmnElement="f20"><di:waypoint x="1347" y="510"/><di:waypoint x="1347" y="785"/><di:waypoint x="1315" y="785"/><di:waypoint x="1315" y="750"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f21" bpmnElement="f21"><di:waypoint x="1340" y="725"/><di:waypoint x="1385" y="725"/><di:waypoint x="1385" y="740"/><di:waypoint x="1430" y="740"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f22" bpmnElement="f22"><di:waypoint x="1315" y="750"/><di:waypoint x="1315" y="800"/><di:waypoint x="1522" y="800"/><di:waypoint x="1522" y="850"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f23" bpmnElement="f23"><di:waypoint x="1615" y="890"/><di:waypoint x="1647" y="890"/><di:waypoint x="1647" y="888"/><di:waypoint x="1680" y="888"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f24" bpmnElement="f24"><di:waypoint x="1615" y="740"/><di:waypoint x="1637" y="740"/><di:waypoint x="1637" y="740"/><di:waypoint x="1660" y="740"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f25" bpmnElement="f25"><di:waypoint x="1840" y="740"/><di:waypoint x="1862" y="740"/><di:waypoint x="1862" y="740"/><di:waypoint x="1885" y="740"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f26" bpmnElement="f26"><di:waypoint x="1935" y="740"/><di:waypoint x="1972" y="740"/><di:waypoint x="1972" y="740"/><di:waypoint x="2010" y="740"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f27" bpmnElement="f27"><di:waypoint x="1910" y="715"/><di:waypoint x="1910" y="965"/><di:waypoint x="1907" y="965"/><di:waypoint x="1907" y="930"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f28" bpmnElement="f28"><di:waypoint x="1820" y="890"/><di:waypoint x="1785" y="890"/><di:waypoint x="1785" y="655"/><di:waypoint x="1750" y="655"/><di:waypoint x="1750" y="780"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f29" bpmnElement="f29"><di:waypoint x="2175" y="740"/><di:waypoint x="2197" y="740"/><di:waypoint x="2197" y="740"/><di:waypoint x="2220" y="740"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f30" bpmnElement="f30"><di:waypoint x="2390" y="740"/><di:waypoint x="2415" y="740"/><di:waypoint x="2415" y="740"/><di:waypoint x="2440" y="740"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f31" bpmnElement="f31"><di:waypoint x="2440" y="740"/><di:waypoint x="2405" y="740"/><di:waypoint x="2405" y="285"/><di:waypoint x="995" y="285"/><di:waypoint x="995" y="410"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f32" bpmnElement="f32"><di:waypoint x="2967" y="550"/><di:waypoint x="2967" y="440"/><di:waypoint x="3182" y="440"/><di:waypoint x="3182" y="330"/></bpmndi:BPMNEdge>
+  <bpmndi:BPMNEdge id="Edge_f33" bpmnElement="f33"><di:waypoint x="3182" y="410"/><di:waypoint x="3182" y="280"/><di:waypoint x="3348" y="280"/><di:waypoint x="3348" y="150"/></bpmndi:BPMNEdge>
+ </bpmndi:BPMNPlane></bpmndi:BPMNDiagram></bpmn:definitions>
